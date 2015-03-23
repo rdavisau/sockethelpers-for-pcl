@@ -9,7 +9,7 @@ namespace SocketHelpers
     ///     Acts as the service discoverer and sends discovery requests according to the protocol defined by
     ///     `TServiceDefinition`.
     /// </summary>
-    /// <typeparam name="TServiceDefinition">TODO: Should be constrained to IServiceDefinition, not TypedServiceDefinition</typeparam>
+    /// <typeparam name="TServiceDefinition"></typeparam>
     /// <typeparam name="TRequestFormat"></typeparam>
     /// <typeparam name="TPayloadFormat"></typeparam>
     public class ServiceDiscoverer<TServiceDefinition, TRequestFormat, TPayloadFormat> :
@@ -22,8 +22,7 @@ namespace SocketHelpers
 
         protected override void OnMessageReceived(object sender, UdpSocketMessageReceivedEventArgs e)
         {
-            var serviceDef = _serviceDefinition as TypedServiceDefinition<TRequestFormat, TPayloadFormat>;
-            var payload = serviceDef.BytesToPayload(e.ByteData);
+            var payload = _serviceDefinition.BytesToPayload(e.ByteData);
 
             _discoveredServices.OnNext(payload);
         }
