@@ -2,4 +2,6 @@
 
 This library aims to provide useful functionality around the base [sockets-for-pcl](https://github.com/rdavisau/sockets-for-pcl/) classes, including hub-style communications, custom protocol helpers and support for typed messaging, and error handling/life cycle and reliability options. 
 
-Code is coming soon.. 
+#### Service Discovery
+Alpha code for service discovery is now included in the project. 
+Please see [here](http://ryandavis.io/service-discovery-in-mobile-apps/) for an overview of the design and usage.
