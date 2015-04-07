@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -21,6 +23,9 @@ namespace SocketHelpers.Messaging
         public IObservable<TMessage> Messages { get { return _messageSubject.AsObservable(); } }
 
         private CancellationTokenSource _executeCancellationSource;
+
+        private List<Assembly> _additionalTypeResolutionAssemblies = new List<Assembly>();
+        public List<Assembly> AdditionalTypeResolutionAssemblies { get { return _additionalTypeResolutionAssemblies; } set { _additionalTypeResolutionAssemblies = value; } } 
 
         public JsonProtocolMessenger(TcpSocketClient client)
         {
@@ -82,7 +87,7 @@ namespace SocketHelpers.Messaging
                     await _client.WriteStream.WriteAsync(allBytes, 0, allBytes.Length);
                     await _client.WriteStream.FlushAsync();
 
-                }, err => Debug.WriteLine(err.Message));
+                }, err => this.Log().Debug(err.Message));
 
             Observable.Defer(() =>
                 Observable.Start(async () =>
@@ -95,7 +100,7 @@ namespace SocketHelpers.Messaging
                         if (count == 0)
                         {
                             // TODO: this seems to indicate other side disconnected unexpectedly
-                            Debug.WriteLine("nothing to read");
+                            this.Log().Debug("nothing to read");
                             continue;
                         }
 
@@ -114,7 +119,16 @@ namespace SocketHelpers.Messaging
                                 var typeName = typeNameBytes.AsUTF8String();
                                 var messageJson = messageBytes.AsUTF8String();
 
-                                var type = Type.GetType(typeName);
+                                var type = Type.GetType(typeName) ?? 
+                                    AdditionalTypeResolutionAssemblies
+                                        .Select(a => Type.GetType(String.Format("{0}, {1}", typeName, a.FullName)))
+                                        .FirstOrDefault(t => t != null);
+
+                                if (type == null)
+                                {
+                                    this.Log().Debug(String.Format("Received a message of type '{0}' but couldn't resolve it using GetType() directly or when qualified by any of the specified AdditionalTypeResolutionAssemblies: [{1}]", typeName, String.Join(",", AdditionalTypeResolutionAssemblies.Select(a=> a.FullName))));
+                                    continue;
+                                }
 
                                 var msg = JsonConvert.DeserializeObject(messageJson, type) as TMessage;
 

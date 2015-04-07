@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using System.Reflection;
 using System.Threading.Tasks;
 using Sockets.Plugin;
 
@@ -31,6 +32,9 @@ namespace SocketHelpers.Messaging
         private readonly TcpSocketListener _listener = new TcpSocketListener();
 
         private readonly MergableSubject<TMessage> _allIncomingMessages = new MergableSubject<TMessage>();
+
+        private List<Assembly> _additionalTypeResolutionAssemblies = new List<Assembly>();
+        public List<Assembly> AdditionalTypeResolutionAssemblies { get { return _additionalTypeResolutionAssemblies; } set { _additionalTypeResolutionAssemblies = value; } } 
 
         public IObservable<TMessage> AllMessages
         {
@@ -63,7 +67,10 @@ namespace SocketHelpers.Messaging
         private void ConnectionReceived(TcpSocketClient newClient)
         {
             var proxy = new TProxy {ProxyGuid = Guid.NewGuid().ToString()};
-            var protocolMessenger = new JsonProtocolMessenger<TMessage>(newClient);
+            var protocolMessenger = new JsonProtocolMessenger<TMessage>(newClient)
+            {
+                AdditionalTypeResolutionAssemblies = AdditionalTypeResolutionAssemblies
+            };
 
             _proxies.Add(proxy);
             _socketClients.Add(newClient);
