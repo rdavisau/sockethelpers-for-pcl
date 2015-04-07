@@ -1,4 +1,4 @@
-﻿namespace SocketHelpers
+﻿namespace SocketHelpers.Discovery
 {
     public static class DiscoveryExtensions
     {

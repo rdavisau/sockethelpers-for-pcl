@@ -6,6 +6,7 @@ using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using SocketHelpers.Extensions;
 using Sockets.Plugin;
 using Splat;
 

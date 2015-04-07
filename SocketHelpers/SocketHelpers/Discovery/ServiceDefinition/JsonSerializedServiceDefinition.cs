@@ -1,7 +1,8 @@
 ﻿using System.Text;
 using Newtonsoft.Json;
+using SocketHelpers.Extensions;
 
-namespace SocketHelpers
+namespace SocketHelpers.Discovery
 {
     /// <summary>
     ///     Abstract implementation of `IServiceDefinition` that allows typed discovery and response formats, with JSON.NET

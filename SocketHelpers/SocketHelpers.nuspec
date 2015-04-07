@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata minClientVersion="2.8.1">
+    <id>rda.SocketHelpers</id>
+    <version>0.0.1-alpha</version>
+    <title>Socket Helpers for PCL projects (alpha)</title>
+    <authors>Ryan Davis</authors>
+    <owners>Ryan Davis</owners>
+    <licenseUrl>https://raw.githubusercontent.com/rdavisau/sockethelpers-for-pcl/master/LICENSE.md</licenseUrl>
+    <projectUrl>https://github.com/rdavisau/sockethelpers-for-pcl</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <copyright>2015 Ryan Davis</copyright>
+    <iconUrl>https://raw.githubusercontent.com/rdavisau/sockets-for-pcl/master/_meta/icon/icon.png</iconUrl>
+    <releaseNotes>
+0.0.1 - Alpha code for service discovery and typed message transmission. See the project page for more information.
+    </releaseNotes>
+    <description>PCL-friendly helpers for common socket tasks, built on top of the sockets-for-pcl project.
+    </description>
+    <summary>Cross-platform TCP and UDP socket API for Xamarin iOS/Android/Forms, Windows Phone 8/8.1, Windows Store and Windows Desktop.</summary>
+    <tags>sockets, tcp, udp, multicast, xamarin, pcl, xam.pcl, windows phone, winphone, wp8, winrt, android, xamarin.forms, ios</tags>
+    <dependencies>
+      <dependency id="Rx-Main" version="2.2.5"/>
+      <dependency id="Splat"/>
+      <dependency id="Newtonsoft.Json"/>
+      <dependency id="rda.SocketsForPCL"/>
+    </dependencies>
+  </metadata>
+  <files>
+
+    <!--Core-->
+    <file src="SocketHelpers\bin\Release\SocketHelpers.dll"
+          target="lib\portable-net45+wp8+wpa81+win8+MonoAndroid10+MonoTouch10+Xamarin.iOS10\SocketHelpers.dll" />
+    <file src="SocketHelpers\bin\Release\SocketHelpers.xml"
+          target="lib\portable-net45+wp8+wpa81+win8+MonoAndroid10+MonoTouch10+Xamarin.iOS10\SocketHelpers.xml" />
+    <file src="SocketHelpers\bin\Release\SocketHelpers.pdb"
+          target="lib\portable-net45+wp8+wpa81+win8+MonoAndroid10+MonoTouch10+Xamarin.iOS10\SocketHelpers.pdb" />
+
+    <!--net45 for LINQPad-->
+    <file src="SocketHelpers\bin\Release\SocketHelpers.dll"
+          target="lib\net45\SocketHelpers.dll" />
+    <file src="SocketHelpers\bin\Release\SocketHelpers.xml"
+          target="lib\net45\SocketHelpers.xml" />
+    <file src="SocketHelpers\bin\Release\SocketHelpers.pdb"
+          target="lib\net45\SocketHelpers.pdb" />
+
+
+  </files>
+</package>

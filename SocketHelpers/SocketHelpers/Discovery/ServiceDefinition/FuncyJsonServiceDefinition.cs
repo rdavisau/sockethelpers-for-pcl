@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SocketHelpers
+namespace SocketHelpers.Discovery
 {
     /// <summary>
     ///     Provides Funcs for DiscoveryRequest and Reponse methods that allow inline definition of service discovery protocols

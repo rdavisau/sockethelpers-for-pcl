@@ -1,7 +1,7 @@
 ﻿using System;
 using Sockets.Plugin;
 
-namespace SocketHelpers
+namespace SocketHelpers.Discovery
 {
     /// <summary>
     ///     Abstract base class for ServicePublisher and ServiceDiscoverer.

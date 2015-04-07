@@ -4,7 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace SocketHelpers
+namespace SocketHelpers.Extensions
 {
     public static class SocketReadingExtensions
     {

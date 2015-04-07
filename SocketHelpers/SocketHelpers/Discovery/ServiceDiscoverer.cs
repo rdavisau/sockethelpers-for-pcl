@@ -3,7 +3,7 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using Sockets.Plugin.Abstractions;
 
-namespace SocketHelpers
+namespace SocketHelpers.Discovery
 {
     /// <summary>
     ///     Acts as the service discoverer and sends discovery requests according to the protocol defined by

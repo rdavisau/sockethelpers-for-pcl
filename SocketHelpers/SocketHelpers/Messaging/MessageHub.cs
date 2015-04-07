@@ -57,7 +57,7 @@ namespace SocketHelpers.Messaging
 
         public MessageHub()
         {
-            _listener.ConnectionReceived += async (sender, args) => ConnectionReceived((TcpSocketClient)args.SocketClient);
+            _listener.ConnectionReceived += (sender, args) => ConnectionReceived((TcpSocketClient)args.SocketClient);
         }
 
         private void ConnectionReceived(TcpSocketClient newClient)

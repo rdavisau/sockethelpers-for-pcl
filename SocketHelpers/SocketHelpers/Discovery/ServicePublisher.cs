@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Sockets.Plugin.Abstractions;
 
-namespace SocketHelpers
+namespace SocketHelpers.Discovery
 {
     /// <summary>
     ///     Acts as the service publisher and responds to discovery requests according to the protocol defined by

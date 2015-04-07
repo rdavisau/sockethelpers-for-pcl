@@ -1,4 +1,6 @@
-﻿namespace SocketHelpers
+﻿using SocketHelpers.Discovery;
+
+namespace SocketHelpers.Discovery
 {
     /// <summary>
     ///     Abstract implementation of `IServiceDefinition` that allows typed discovery and response formats.
@@ -18,6 +20,9 @@
             return new ServiceDiscoverer<TypedServiceDefinition<TRequestFormat, TPayloadFormat>, TRequestFormat, TPayloadFormat>(this);
         }
 
+        /// <summary>
+        /// Constructor for TypedServiceDefinition
+        /// </summary>
         protected TypedServiceDefinition()
         {
             // default ports

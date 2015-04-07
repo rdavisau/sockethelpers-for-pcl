@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Sockets.Plugin;
 using Sockets.Plugin.Abstractions;
 
-namespace SocketHelpers
+namespace SocketHelpers.Discovery
 {
     /// <summary>
     ///     Abstract base class of ServiceDiscoverer. Contains the low-level discovery flow control.
