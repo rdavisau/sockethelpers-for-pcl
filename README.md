@@ -2,6 +2,8 @@
 
 This library aims to provide useful functionality around the base [sockets-for-pcl](https://github.com/rdavisau/sockets-for-pcl/) classes, including hub-style communications, custom protocol helpers and support for typed messaging, and error handling/life cycle and reliability options. 
 
+There is a NuGet package with [here](https://www.nuget.org/packages/rda.SocketHelpers) with the latest functionality. This is all alpha so it is possible that new versions will break existing code. 
+
 #### Service Discovery
 Alpha code for service discovery is now included in the project. 
 Please see [here](http://ryandavis.io/service-discovery-in-mobile-apps/) for an overview of the design and usage. 
@@ -75,3 +77,7 @@ Call `Send` on `JsonProtocolMessenger`.
 var msg = new Message { Content = "Hi" };
 messenger.Send(msg);
 ```
+
+**Type Resolution**
+
+`JsonProtocolMessenger` includes the object type name as part of the protocol when sending, so that the receiving end knows what it should deserialize to. When a message is received, `JsonProtocolMessenger` uses `Type.GetType(typeName)` to resolve the type. This might fail to resolve the type in some obscure situations, notably when running in a LINQPad query and transmitting an object whose class is defined in the query itself. To help `JsonProtocolMessenger` find your type, you can add assemblies to its `AdditionalTypeResolutionAssemblies` property. These assemblies will be searched if the initial `Type.GetType()` call does not return a type. In the LINQPad case specifically, you should also add `#DEFINE NONEST` to the top of your query to prevent it from nesting types within its `UserQuery` class. 

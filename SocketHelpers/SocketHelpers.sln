@@ -7,6 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketHelpers", "SocketHelp
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7EDC6457-A528-4D1A-ACFE-A3A9DBEFB213}"
 	ProjectSection(SolutionItems) = preProject
+		..\CHANGELOG.md = ..\CHANGELOG.md
 		..\LICENSE.md = ..\LICENSE.md
 		..\README.md = ..\README.md
 		SocketHelpers.nuspec = SocketHelpers.nuspec
