@@ -1,14 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Reflection;
 using System.Threading.Tasks;
 using Sockets.Plugin;
+using Splat;
 
 namespace SocketHelpers.Messaging
 {
-    public class MessageHub<TProxy, TMessage>
+    public class MessageHub<TProxy, TMessage> : IEnableLogger
         where TProxy : IProxy, new()
         where TMessage : class, IMessage
     {
@@ -98,9 +100,9 @@ namespace SocketHelpers.Messaging
             return _listener.StopListeningAsync();
         }
 
-        public async Task DisconnectAllClients()
+        public Task DisconnectAllClients()
         {
-            foreach (var socketClient in _socketClients)
+            _socketClients.ToList().AsParallel().ForAll(async socketClient =>
             {
                 try
                 {
@@ -114,8 +116,12 @@ namespace SocketHelpers.Messaging
                     await socketClient.DisconnectAsync();
 
                 }
-                catch { }
-            }
+                catch (Exception e)
+                {
+                    this.Log().Error(String.Format("Error disconnecting client - {0}", e.Message));
+                }
+            });
+
         }
 
         public Task SendToAsync(TMessage message, TProxy proxy)
