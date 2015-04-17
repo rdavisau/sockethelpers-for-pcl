@@ -35,7 +35,7 @@ discover.DiscoveredServices.Subscribe(svc => /* handle your responses */);
 discoverer.StartDiscovering(); 
 ```
 #### Typed Message Transmission
-Alpha code for strongly typed object transimssion is included in the project via `JsonProtocolMessenger`. 
+Alpha code for strongly typed object transmission is included in the project via `JsonProtocolMessenger`. 
 `JsonProtocolMessenger` wraps a `TcpSocketClient` and facilitates sending and receiving strongly typed objects. It exposes an `IObservable<TMessage>` of messages received, and a `Send(TMessage message)` method for sending to the other party. Serialisation is handled by JSON.NET. 
 
 **Connecting**
