@@ -98,7 +98,7 @@ namespace SocketHelpers.Messaging
                     while (!canceller.IsCancellationRequested)
                     {
                         byte[] messageTypeBuf = new byte[1];
-                        var count = await _client.ReadStream.ReadAsync(messageTypeBuf, 0, 1, canceller).IgnoreFaultIfCancelled(canceller, () => 0x0);
+                        var count = await _client.ReadStream.ReadAsync(messageTypeBuf, 0, 1, canceller);
 
                         if (count == 0)
                         {
