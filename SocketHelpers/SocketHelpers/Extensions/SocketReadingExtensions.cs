@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
@@ -8,19 +9,19 @@ namespace SocketHelpers.Extensions
 {
     public static class SocketReadingExtensions
     {
-        public static async Task<byte> ReadByteAsync(this Stream s)
+        public static async Task<byte> ReadByteAsync(this Stream s, CancellationToken canceller = default(CancellationToken))
         {
             var buf = new byte[1];
-            await s.ReadAsync(buf, 0, 1);
+            await s.ReadAsync(buf, 0, 1, canceller);
 
             return buf[0];
         }
 
-        public static async Task<byte[]> ReadBytesAsync(this Stream s, int byteCount)
+        public static async Task<byte[]> ReadBytesAsync(this Stream s, int byteCount, CancellationToken canceller = default(CancellationToken))
         {
             var buf = new byte[byteCount];
-            await s.ReadAsync(buf, 0, byteCount);
-
+            await s.ReadAsync(buf, 0, byteCount, canceller);
+            
             return buf;
         }
 

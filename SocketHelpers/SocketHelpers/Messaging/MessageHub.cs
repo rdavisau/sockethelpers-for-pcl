@@ -102,26 +102,30 @@ namespace SocketHelpers.Messaging
 
         public Task DisconnectAllClients()
         {
-            _socketClients.ToList().AsParallel().ForAll(async socketClient =>
+            return Task.Run(() =>
             {
-                try
+
+                _socketClients.ToList().AsParallel().ForAll(async socketClient =>
                 {
-                    var proxy = _socketToProxyLookup[socketClient];
+                    try
+                    {
+                        var proxy = _socketToProxyLookup[socketClient];
 
-                    _socketClients.Remove(socketClient);
-                    _proxies.Remove(proxy);
-                    _proxyToSocketLookup.Remove(proxy);
-                    _socketToProxyLookup.Remove(socketClient);
+                        _socketClients.Remove(socketClient);
+                        _proxies.Remove(proxy);
+                        _proxyToSocketLookup.Remove(proxy);
+                        _socketToProxyLookup.Remove(socketClient);
 
-                    await socketClient.DisconnectAsync();
+                        await socketClient.DisconnectAsync();
 
-                }
-                catch (Exception e)
-                {
-                    this.Log().Error(String.Format("Error disconnecting client - {0}", e.Message));
-                }
+                    }
+                    catch (Exception e)
+                    {
+                        this.Log().Error(String.Format("Error disconnecting client - {0}", e.Message));
+                    }
+                });
+
             });
-
         }
 
         public Task SendToAsync(TMessage message, TProxy proxy)

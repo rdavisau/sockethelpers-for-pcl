@@ -59,6 +59,7 @@ namespace SocketHelpers.Messaging
             _sendSubject
                 .Subscribe(async queueItem =>
                 {
+                    var canceller = _executeCancellationSource.Token;
 
                     if (queueItem.MessageType != JsonProtocolMessengerMessageType.StandardMessage)
                         throw new InvalidOperationException();
@@ -84,18 +85,20 @@ namespace SocketHelpers.Messaging
                         .SelectMany(b => b)
                         .ToArray();
 
-                    await _client.WriteStream.WriteAsync(allBytes, 0, allBytes.Length);
-                    await _client.WriteStream.FlushAsync();
+                    await _client.WriteStream.WriteAsync(allBytes, 0, allBytes.Length, canceller);
+                    await _client.WriteStream.FlushAsync(canceller);
 
                 }, err => this.Log().Debug(err.Message));
 
             Observable.Defer(() =>
                 Observable.Start(async () =>
                 {
-                    while (!_executeCancellationSource.IsCancellationRequested)
+                    var canceller = _executeCancellationSource.Token;
+
+                    while (!canceller.IsCancellationRequested)
                     {
                         byte[] messageTypeBuf = new byte[1];
-                        var count = await _client.ReadStream.ReadAsync(messageTypeBuf, 0, 1);
+                        var count = await _client.ReadStream.ReadAsync(messageTypeBuf, 0, 1, canceller).IgnoreFaultIfCancelled(canceller, () => 0x0);
 
                         if (count == 0)
                         {
@@ -110,11 +113,11 @@ namespace SocketHelpers.Messaging
                         {
                             case JsonProtocolMessengerMessageType.StandardMessage:
 
-                                var typeNameLength = (await _client.ReadStream.ReadBytesAsync(sizeof(int))).AsInt32();
-                                var messageLength = (await _client.ReadStream.ReadBytesAsync(sizeof(int))).AsInt32();
+                                var typeNameLength = (await _client.ReadStream.ReadBytesAsync(sizeof(int), canceller)).AsInt32();
+                                var messageLength = (await _client.ReadStream.ReadBytesAsync(sizeof(int), canceller)).AsInt32();
 
-                                var typeNameBytes = await _client.ReadStream.ReadBytesAsync(typeNameLength);
-                                var messageBytes = await _client.ReadStream.ReadBytesAsync(messageLength);
+                                var typeNameBytes = await _client.ReadStream.ReadBytesAsync(typeNameLength, canceller);
+                                var messageBytes = await _client.ReadStream.ReadBytesAsync(messageLength, canceller);
 
                                 var typeName = typeNameBytes.AsUTF8String();
                                 var messageJson = messageBytes.AsUTF8String();
@@ -123,7 +126,7 @@ namespace SocketHelpers.Messaging
                                     AdditionalTypeResolutionAssemblies
                                         .Select(a => Type.GetType(String.Format("{0}, {1}", typeName, a.FullName)))
                                         .FirstOrDefault(t => t != null);
-
+                                
                                 if (type == null)
                                 {
                                     this.Log().Debug(String.Format("Received a message of type '{0}' but couldn't resolve it using GetType() directly or when qualified by any of the specified AdditionalTypeResolutionAssemblies: [{1}]", typeName, String.Join(",", AdditionalTypeResolutionAssemblies.Select(a=> a.FullName))));
@@ -145,9 +148,17 @@ namespace SocketHelpers.Messaging
 
                     }
 
-                })).Subscribe(_ => this.Log().Debug("MessageReader OnNext"),
+                }).Catch(Observable.Empty<Task>())
+                ).Retry()
+                .Subscribe(_ => this.Log().Debug("MessageReader OnNext"),
                     ex => this.Log().Debug("MessageReader OnError - " + ex.Message),
                     () => this.Log().Debug("MessageReader OnCompleted"));
+        }
+
+        public void StopExecuting()
+        {
+            _executeCancellationSource.Cancel();
+
         }
     }
 }
