@@ -3,8 +3,8 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata minClientVersion="2.8.1">
     <id>rda.SocketHelpers</id>
-    <version>0.0.1-alpha</version>
     <title>Socket Helpers for PCL projects (alpha)</title>
+    <version>0.0.2-alpha</version>
     <authors>Ryan Davis</authors>
     <owners>Ryan Davis</owners>
     <licenseUrl>https://raw.githubusercontent.com/rdavisau/sockethelpers-for-pcl/master/LICENSE.md</licenseUrl>

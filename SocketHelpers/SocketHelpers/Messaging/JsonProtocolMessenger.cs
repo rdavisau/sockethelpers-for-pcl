@@ -11,15 +11,36 @@ using Newtonsoft.Json;
 using SocketHelpers.Extensions;
 using Sockets.Plugin;
 using Splat;
+using Sockets.Plugin.Abstractions;
 
 namespace SocketHelpers.Messaging
 {
+    public class MessengerDisconnectedEventArgs : EventArgs
+    {
+        public DisconnectionType DisconnectionType { get; set;}
+
+        public MessengerDisconnectedEventArgs(DisconnectionType disconnectionType)
+        {
+            DisconnectionType = disconnectionType;
+        }
+    }
+
+    public enum DisconnectionType : byte
+    {
+        Graceful = 0x0,
+        ApplicationSuspended = 0x1,
+        ApplicationTerminated = 0x2,
+        Unexpected = 0xFF
+    }
+
     public class JsonProtocolMessenger<TMessage> : IEnableLogger where TMessage : class
     {
-        readonly TcpSocketClient _client;
+        readonly ITcpSocketClient _client;
+
+        public EventHandler<MessengerDisconnectedEventArgs> Disconnected;
 
         private readonly Subject<JsonProtocolQueueItem<TMessage>> _sendSubject = new Subject<JsonProtocolQueueItem<TMessage>>();
-        readonly Subject<TMessage> _messageSubject = new Subject<TMessage>();
+        private Subject<TMessage> _messageSubject = new Subject<TMessage>();
         public IObservable<TMessage> Messages { get { return _messageSubject.AsObservable(); } }
 
         private CancellationTokenSource _executeCancellationSource;
@@ -27,9 +48,10 @@ namespace SocketHelpers.Messaging
         private List<Assembly> _additionalTypeResolutionAssemblies = new List<Assembly>();
         public List<Assembly> AdditionalTypeResolutionAssemblies { get { return _additionalTypeResolutionAssemblies; } set { _additionalTypeResolutionAssemblies = value; } } 
 
-        public JsonProtocolMessenger(TcpSocketClient client)
+        public JsonProtocolMessenger(ITcpSocketClient client)
         {
             _client = client;
+            _messageSubject = new Subject<TMessage>();
         }
 
         public void Send(TMessage message)
@@ -43,8 +65,28 @@ namespace SocketHelpers.Messaging
             _sendSubject.OnNext(wrapper);
         }
 
-        public void StartExecuting()
+        public async Task Disconnect(DisconnectionType disconnectionType)
         {
+            const int failedDisconnectTimeoutSeconds = 5;
+
+            var wrapper = new JsonProtocolDisconnectionQueueItem<TMessage>
+             {
+                 MessageType = JsonProtocolMessengerMessageType.DisconnectMessage,
+                 DisconnectionType = disconnectionType
+             };
+
+            _sendSubject.OnNext(wrapper);
+
+            // this lets you await the *sending* of the disconnection
+            // (i.e. not just the queuing of it)
+            // this way we dont' actually disconnect until after we have told people
+            // TODO: in case it somehow doesn't happen, timeout after a bit
+            await wrapper.Delivered;
+            StopExecuting();
+        }
+
+        public void StartExecuting()
+        {        
             if (_executeCancellationSource != null && !_executeCancellationSource.IsCancellationRequested)
                 _executeCancellationSource.Cancel();
 
@@ -61,32 +103,60 @@ namespace SocketHelpers.Messaging
                 {
                     var canceller = _executeCancellationSource.Token;
 
-                    if (queueItem.MessageType != JsonProtocolMessengerMessageType.StandardMessage)
-                        throw new InvalidOperationException();
+                    if (queueItem.MessageType != JsonProtocolMessengerMessageType.StandardMessage && queueItem.MessageType != JsonProtocolMessengerMessageType.DisconnectMessage)
+                        throw new InvalidOperationException("There's no code for sending other message types (please feel free to add some)");
 
-                    this.Log().Debug(String.Format("SEND: {0}", queueItem.Payload.AsJson()));
+                    switch (queueItem.MessageType)
+                    {
+                        case JsonProtocolMessengerMessageType.StandardMessage:
+                        {
+                            this.Log().Debug(String.Format("SEND: {0}", queueItem.Payload.AsJson()));
 
-                    var payload = queueItem.Payload;
+                            var payload = queueItem.Payload;
 
-                    var typeNameBytes = payload.GetType().FullName.AsUTF8ByteArray();
-                    var messageBytes = payload.AsJson().AsUTF8ByteArray();
+                            var typeNameBytes = payload.GetType().FullName.AsUTF8ByteArray();
+                            var messageBytes = payload.AsJson().AsUTF8ByteArray();
 
-                    var typeNameSize = typeNameBytes.Length.AsByteArray();
-                    var messageSize = messageBytes.Length.AsByteArray();
+                            var typeNameSize = typeNameBytes.Length.AsByteArray();
+                            var messageSize = messageBytes.Length.AsByteArray();
 
-                    var allBytes = new[] 
-                    { 
-                        new [] { (byte) JsonProtocolMessengerMessageType.StandardMessage }, 
-                        typeNameSize,
-                        messageSize,
-                        typeNameBytes,
-                        messageBytes
+                            var allBytes = new[] 
+                            { 
+                                new [] { (byte) JsonProtocolMessengerMessageType.StandardMessage }, 
+                                typeNameSize,
+                                messageSize,
+                                typeNameBytes,
+                                messageBytes
+                            }
+                                .SelectMany(b => b)
+                                .ToArray();
+
+                            await _client.WriteStream.WriteAsync(allBytes, 0, allBytes.Length, canceller);
+                            await _client.WriteStream.FlushAsync(canceller);
+
+                            break;
+                        }
+
+                        case JsonProtocolMessengerMessageType.DisconnectMessage:
+                        {
+                            var dcItem = queueItem as JsonProtocolDisconnectionQueueItem<TMessage>;
+
+                            this.Log().Debug(String.Format("SEND DISC: {0}", dcItem.DisconnectionType));
+
+                            var allBytes = new[] 
+                            { 
+                                (byte) JsonProtocolMessengerMessageType.DisconnectMessage,
+                                (byte) dcItem.DisconnectionType
+                            };
+
+                            await _client.WriteStream.WriteAsync(allBytes, 0, allBytes.Length, canceller);
+                            await _client.WriteStream.FlushAsync(canceller);
+
+                            dcItem.DidSend();
+
+                            break;
+                        }
                     }
-                        .SelectMany(b => b)
-                        .ToArray();
-
-                    await _client.WriteStream.WriteAsync(allBytes, 0, allBytes.Length, canceller);
-                    await _client.WriteStream.FlushAsync(canceller);
 
                 }, err => this.Log().Debug(err.Message));
 
@@ -102,9 +172,14 @@ namespace SocketHelpers.Messaging
 
                         if (count == 0)
                         {
-                            // TODO: this seems to indicate other side disconnected unexpectedly
-                            this.Log().Debug("nothing to read");
-                            continue;
+                            _executeCancellationSource.Cancel();
+
+                            this.Log().Error("Unexpected disconnection");
+                            
+                            if(Disconnected != null)
+                                Disconnected(this, new MessengerDisconnectedEventArgs(DisconnectionType.Unexpected));
+
+                            return;
                         }
 
                         var messageType = (JsonProtocolMessengerMessageType)messageTypeBuf[0];
@@ -129,7 +204,7 @@ namespace SocketHelpers.Messaging
                                 
                                 if (type == null)
                                 {
-                                    this.Log().Debug(String.Format("Received a message of type '{0}' but couldn't resolve it using GetType() directly or when qualified by any of the specified AdditionalTypeResolutionAssemblies: [{1}]", typeName, String.Join(",", AdditionalTypeResolutionAssemblies.Select(a=> a.FullName))));
+                                    this.Log().Warn(String.Format("Received a message of type '{0}' but couldn't resolve it using GetType() directly or when qualified by any of the specified AdditionalTypeResolutionAssemblies: [{1}]", typeName, String.Join(",", AdditionalTypeResolutionAssemblies.Select(a=> a.FullName))));
                                     continue;
                                 }
 
@@ -142,12 +217,19 @@ namespace SocketHelpers.Messaging
                                 break;
 
                             case JsonProtocolMessengerMessageType.DisconnectMessage:
-                                //TODO: 
-                                break;
+                                var disconnectionType = (DisconnectionType) (await _client.ReadStream.ReadByteAsync(canceller));
+                                this.Log().Debug(String.Format("RECV DISC: {0}", disconnectionType));
+
+                                if(Disconnected != null)
+                                    Disconnected(this, new MessengerDisconnectedEventArgs(disconnectionType));
+
+                                StopExecuting();
+
+                                return;
                         }
 
                     }
-
+                     
                 }).Catch(Observable.Empty<Task>())
                 ).Retry()
                 .Subscribe(_ => this.Log().Debug("MessageReader OnNext"),
@@ -157,8 +239,11 @@ namespace SocketHelpers.Messaging
 
         public void StopExecuting()
         {
-            _executeCancellationSource.Cancel();
+            _messageSubject.OnCompleted();
+            _messageSubject = new Subject<TMessage>();
 
+            _executeCancellationSource.Cancel();
+            _executeCancellationSource = null;
         }
     }
 }
