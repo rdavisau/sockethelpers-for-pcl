@@ -15,6 +15,7 @@ namespace SocketHelpers.Discovery
     public class ServiceDiscoverer<TServiceDefinition, TRequestFormat, TPayloadFormat> :
         ServiceDiscovererBase<TServiceDefinition>
         where TServiceDefinition : TypedServiceDefinition<TRequestFormat, TPayloadFormat>
+        where TPayloadFormat : IDiscoveryPayload
     {
         public ServiceDiscoverer(TServiceDefinition definition) : base(definition)
         {
@@ -24,6 +25,14 @@ namespace SocketHelpers.Discovery
         {
             var payload = _serviceDefinition.BytesToPayload(e.ByteData);
 
+            // add the remote host data
+            var port = -1;
+            Int32.TryParse(e.RemotePort, out port);
+
+            payload.RemoteAddress = e.RemoteAddress;
+            payload.RemotePort = port;
+
+            // pump the discovery response
             _discoveredServices.OnNext(payload);
         }
 

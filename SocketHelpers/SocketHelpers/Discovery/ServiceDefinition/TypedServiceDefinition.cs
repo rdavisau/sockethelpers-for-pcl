@@ -9,6 +9,7 @@ namespace SocketHelpers.Discovery
     /// <typeparam name="TRequestFormat"></typeparam>
     /// <typeparam name="TPayloadFormat"></typeparam>
     public abstract class TypedServiceDefinition<TRequestFormat, TPayloadFormat> : IServiceDefinition
+        where TPayloadFormat : IDiscoveryPayload
     {
         public ServicePublisher<TypedServiceDefinition<TRequestFormat, TPayloadFormat>> CreateServicePublisher()
         {

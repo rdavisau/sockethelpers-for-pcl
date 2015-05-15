@@ -9,6 +9,7 @@ namespace SocketHelpers.Discovery
     /// <typeparam name="TPayloadFormat"></typeparam>
     public class FuncyJsonServiceDefinition<TSeekFormat, TPayloadFormat> :
         JsonSerializedServiceDefinition<TSeekFormat, TPayloadFormat>
+        where TPayloadFormat : IDiscoveryPayload
     {
         public Func<TSeekFormat> DiscoveryRequestFunc { get; set; }
         public Func<TSeekFormat, TPayloadFormat> ResponseForRequestFunc { get; set; }

@@ -38,6 +38,7 @@
   <ItemGroup>
     <Compile Include="BetterTcpSocketClient.cs" />
     <Compile Include="Discovery\ByteArrayServiceDiscoverer.cs" />
+    <Compile Include="Discovery\IDiscoveryPayload.cs" />
     <Compile Include="Extensions\AsyncExtensions.cs" />
     <Compile Include="Discovery\Extensions\DiscoveryExtensions.cs" />
     <Compile Include="Discovery\ServiceDefinition\FuncyJsonServiceDefinition.cs" />

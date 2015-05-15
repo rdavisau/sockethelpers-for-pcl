@@ -14,6 +14,7 @@ namespace SocketHelpers.Discovery
     /// <typeparam name="TPayloadFormat"></typeparam>
     public abstract class JsonSerializedServiceDefinition<TSeekFormat, TPayloadFormat> :
         TypedServiceDefinition<TSeekFormat, TPayloadFormat>
+        where TPayloadFormat : IDiscoveryPayload
     {
         public override byte[] MessageToBytes(TSeekFormat message)
         {
