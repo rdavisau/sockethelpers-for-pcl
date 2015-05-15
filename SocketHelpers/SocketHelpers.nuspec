@@ -4,7 +4,7 @@
   <metadata minClientVersion="2.8.1">
     <id>rda.SocketHelpers</id>
     <title>Socket Helpers for PCL projects (alpha)</title>
-    <version>0.0.2-alpha</version>
+    <version>0.0.3-alpha</version>
     <authors>Ryan Davis</authors>
     <owners>Ryan Davis</owners>
     <licenseUrl>https://raw.githubusercontent.com/rdavisau/sockethelpers-for-pcl/master/LICENSE.md</licenseUrl>
@@ -13,6 +13,8 @@
     <copyright>2015 Ryan Davis</copyright>
     <iconUrl>https://raw.githubusercontent.com/rdavisau/sockets-for-pcl/master/_meta/icon/icon.png</iconUrl>
     <releaseNotes>
+0.0.3 - Improvements to ServiceDiscovery - response types must now implement IDiscoveryPayload, allowing sockethelpers to populate the information automatically. 
+0.0.2 - Improvements to JsonProtocolMessenger.
 0.0.1 - Alpha code for service discovery and typed message transmission. See the project page for more information.
     </releaseNotes>
     <description>PCL-friendly helpers for common socket tasks, built on top of the sockets-for-pcl project.
